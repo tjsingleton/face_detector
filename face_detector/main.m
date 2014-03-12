@@ -19,8 +19,11 @@
 #define RIGHT_EYE_BOX_COLOR [NSColor cyanColor]
 #define MOUTH_BOX_COLOR     [NSColor redColor]
 
+char *to_s(NSString *string){return [string cStringUsingEncoding:NSUTF8StringEncoding];}
+
 void draw_faces_on_context(CGContextRef c, NSArray *faces)
 {
+    /* FIXME: take into account the face angle */
     for (CIFaceFeature *face in faces) {
         CGRect bounds = face.bounds;
         [FACE_BOX_COLOR set];
@@ -91,11 +94,15 @@ void save_to_path(NSImage * image, NSString* path, BOOL isJpeg)
 
 int main(int argc, const char * argv[])
 {
+    if (argc < 2) {
+        printf("Usage:\n%s /path/to/image\n", argv[0]);
+        return 1;
+    }
+
     @autoreleasepool {
 
         CIDetector *faceDetector;
         NSArray *faces;
-
         
         faceDetector = [CIDetector detectorOfType:CIDetectorTypeFace context:nil options:[NSDictionary dictionaryWithObjectsAndKeys:CIDetectorAccuracyHigh, CIDetectorAccuracy, nil]];
 
@@ -116,18 +123,17 @@ int main(int argc, const char * argv[])
         NSFileManager *fileManager= [NSFileManager defaultManager];
         NSError *error = nil;
         if(![fileManager createDirectoryAtPath:FACE_DETECTOR_OUTPUT_DIRECTORY withIntermediateDirectories:YES attributes:nil error:&error]) {
-            NSLog(@"Failed to create directory \"%@\". Error: %@", FACE_DETECTOR_OUTPUT_DIRECTORY, error);
-            return 1;
+            printf("Failed to create directory \"%s\". Error: %s\n", to_s(FACE_DETECTOR_OUTPUT_DIRECTORY), to_s([error description]));
+            return 2;
         } 
         NSString *fileName = [[imagePath pathComponents] lastObject];
         NSString *fileExt = [imagePath pathExtension];
         NSString *imageOutputPath = [NSString stringWithFormat:@"%@/%@", FACE_DETECTOR_OUTPUT_DIRECTORY, fileName];
         if ([fileManager fileExistsAtPath:imageOutputPath]) {
-            NSLog(@"Image file %@ already exists. Skipping it.", imageOutputPath);
-            return 2;
+            printf("Image file %s already exists. Skipping it.\n", to_s(imageOutputPath));
+            return 3;
         }
         save_to_path(output, imageOutputPath, [[fileExt lowercaseString] hasPrefix:@"jp"]);
     }
     return 0;
 }
-
