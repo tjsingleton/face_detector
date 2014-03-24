@@ -103,7 +103,7 @@ int main(int argc, const char * argv[])
 
         CIDetector *faceDetector;
         NSArray *faces;
-        
+
         faceDetector = [CIDetector detectorOfType:CIDetectorTypeFace context:nil options:[NSDictionary dictionaryWithObjectsAndKeys:CIDetectorAccuracyHigh, CIDetectorAccuracy, nil]];
 
         NSString *imagePath = [NSString stringWithUTF8String:argv[1]];
@@ -115,25 +115,12 @@ int main(int argc, const char * argv[])
 
         /* detect the faces */
         faces = [faceDetector featuresInImage:ciImage];
-
-        /* draw the faces and facial features boxes */
-        NSImage *output = add_faces_to_image(image, faces);
-
-        /* save to disk */
-        NSFileManager *fileManager= [NSFileManager defaultManager];
-        NSError *error = nil;
-        if(![fileManager createDirectoryAtPath:FACE_DETECTOR_OUTPUT_DIRECTORY withIntermediateDirectories:YES attributes:nil error:&error]) {
-            printf("Failed to create directory \"%s\". Error: %s\n", to_s(FACE_DETECTOR_OUTPUT_DIRECTORY), to_s([error description]));
-            return 2;
-        } 
-        NSString *fileName = [[imagePath pathComponents] lastObject];
-        NSString *fileExt = [imagePath pathExtension];
-        NSString *imageOutputPath = [NSString stringWithFormat:@"%@/%@", FACE_DETECTOR_OUTPUT_DIRECTORY, fileName];
-        if ([fileManager fileExistsAtPath:imageOutputPath]) {
-            printf("Image file %s already exists. Skipping it.\n", to_s(imageOutputPath));
-            return 3;
+        
+        for (CIFaceFeature *face in faces) {
+            CGFloat height = image.size.height;
+            CGRect bounds = face.bounds;
+            printf("(%d,%d),(%d,%d)\n", (int)bounds.origin.x, (int) bounds.origin.y, (int) bounds.size.width, (int) bounds.size.height);
         }
-        save_to_path(output, imageOutputPath, [[fileExt lowercaseString] hasPrefix:@"jp"]);
     }
     return 0;
 }
